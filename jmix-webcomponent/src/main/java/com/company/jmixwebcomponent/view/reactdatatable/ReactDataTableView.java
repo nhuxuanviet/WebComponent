@@ -1,12 +1,10 @@
 package com.company.jmixwebcomponent.view.reactdatatable;
 
+import com.company.jmixwebcomponent.component.ReactDataTable;
 import com.company.jmixwebcomponent.entity.User;
 import com.company.jmixwebcomponent.view.main.MainView;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vaadin.flow.component.EventData;
-import com.vaadin.flow.component.Html;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.flowui.Dialogs;
@@ -16,7 +14,6 @@ import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Route(value = "react-data-table-view", layout = MainView.class)
 @ViewController(id = "ReactDataTableView")
@@ -24,7 +21,7 @@ import java.util.stream.Collectors;
 public class ReactDataTableView extends StandardView {
 
     @ViewComponent
-    private Html reactTableHost;
+    private ReactDataTable table;
 
     @Autowired
     private DataManager dataManager;
@@ -35,112 +32,101 @@ public class ReactDataTableView extends StandardView {
     @Autowired
     private Dialogs dialogs;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
+    private List<User> users = new ArrayList<>();
+
+    @Subscribe
+    public void onInit(InitEvent event) {
+        table.setSizeFull();
+    }
+
 
     @Subscribe
     public void onBeforeShow(BeforeShowEvent event) {
-
-        // Load Web Component JS
-        UI.getCurrent().getPage()
-                .addJavaScript("/react-data-table.js");
-
-        // ===== COLUMNS =====
-        List<Map<String, Object>> columns = List.of(
-                Map.of("key", "username",  "label", "Username"),
-                Map.of("key", "firstName", "label", "First name"),
-                Map.of("key", "lastName",  "label", "Last name"),
-                Map.of("key", "email",     "label", "Email"),
-                Map.of("key", "active",    "label", "Active")
-        );
-
-        // ===== LOAD USERS =====
-        reloadTable(columns);
+        loadTable();
+        initListeners();
     }
 
-    /**
-     * EDIT USER
-     */
-    @Subscribe(id = "reactTableHost", subject = "row-edit")
-    public void onRowEdit(@EventData("event.detail") Map<String, Object> row) {
+    private void initListeners() {
 
-        UUID userId = UUID.fromString(row.get("id").toString());
+        table.addRowEditListener(e -> {
+            try {
+                Map<String, Object> row =
+                        mapper.readValue(e.getRowJson(), Map.class);
 
-        User user = dataManager.load(User.class)
-                .id(userId)
-                .one();
+                UUID userId = UUID.fromString(row.get("id").toString());
 
-        viewNavigators
-                .detailView(this, User.class)
-                .editEntity(user)
-                .navigate();
-    }
+                User user = dataManager.load(User.class)
+                        .id(userId)
+                        .one();
 
-    /**
-     * DELETE USER
-     */
-    @Subscribe(id = "reactTableHost", subject = "row-delete")
-    public void onRowDelete(@EventData("event.detail") Map<String, Object> row) {
+                viewNavigators
+                        .detailView(this, User.class)
+                        .editEntity(user)
+                        .navigate();
 
-        UUID userId = UUID.fromString(row.get("id").toString());
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
 
-        dialogs.createOptionDialog()
-                .withHeader("Delete user")
-                .withText("Are you sure you want to delete this user?")
+        table.addRowDeleteListener(e -> dialogs.createOptionDialog()
+                .withHeader("Vui lòng xác nhận")
+                .withText("Bạn có chắc chắn muốn xóa?")
                 .withActions(
                         new DialogAction(DialogAction.Type.YES)
-                                .withHandler(e -> {
-                                    User user = dataManager.load(User.class)
-                                            .id(userId)
-                                            .one();
+                                .withHandler(ev -> {
+                                    try {
+                                        Map<String, Object> row =
+                                                mapper.readValue(e.getRowJson(), Map.class);
 
-                                    dataManager.remove(user);
+                                        UUID userId = UUID.fromString(row.get("id").toString());
 
-                                    reloadTable(null);
+                                        User user = dataManager.load(User.class)
+                                                .id(userId)
+                                                .one();
+
+                                        dataManager.remove(user);
+                                        loadTable(); // reload
+
+                                    } catch (Exception ex) {
+                                        throw new RuntimeException(ex);
+                                    }
                                 }),
                         new DialogAction(DialogAction.Type.NO)
                 )
-                .open();
+                .open());
+
     }
 
-    /**
-     * Reload table data
-     */
-    private void reloadTable(List<Map<String, Object>> columns) {
+    private void loadTable() {
         try {
-            List<User> users = dataManager.load(User.class)
-                    .all()
-                    .list();
+            users = dataManager.load(User.class).all().list();
 
-            List<Map<String, Object>> rows = users.stream()
-                    .map(u -> {
-                        Map<String, Object> map = new HashMap<>();
-                        map.put("id", u.getId().toString());
-                        map.put("username", u.getUsername());
-                        map.put("firstName", u.getFirstName());
-                        map.put("lastName", u.getLastName());
-                        map.put("email", u.getEmail());
-                        map.put("active", u.getActive());
-                        return map;
-                    })
-                    .collect(Collectors.toList());
+            List<Map<String, Object>> columns = List.of(
+                    Map.of("key", "username", "label", "Username"),
+                    Map.of("key", "firstName", "label", "First name"),
+                    Map.of("key", "lastName", "label", "Last name"),
+                    Map.of("key", "email", "label", "Email"),
+                    Map.of("key", "active", "label", "Active")
+            );
 
-            if (columns != null) {
-                reactTableHost.getElement().executeJs(
-                        """
-                        this.setAttribute('columns', $0);
-                        this.setAttribute('rows', $1);
-                        """,
-                        objectMapper.writeValueAsString(columns),
-                        objectMapper.writeValueAsString(rows)
-                );
-            } else {
-                reactTableHost.getElement().executeJs(
-                        """
-                        this.setAttribute('rows', $0);
-                        """,
-                        objectMapper.writeValueAsString(rows)
-                );
+            List<Map<String, Object>> rows = new ArrayList<>();
+
+            for (User u : users) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", u.getId().toString()); // ⭐ BẮT BUỘC
+                m.put("username", u.getUsername());
+                m.put("firstName", u.getFirstName());
+                m.put("lastName", u.getLastName());
+                m.put("email", u.getEmail());
+                m.put("active", u.getActive());
+                rows.add(m);
             }
+
+            table.setColumns(mapper.writeValueAsString(columns));
+            table.setRows(mapper.writeValueAsString(rows));
+
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

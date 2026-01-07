@@ -5,13 +5,52 @@ import cssText from "../styles/tailwind-wc.compiled.css?raw";
 
 export class ReactDataTableElement extends HTMLElement {
   private root: Root | null = null;
-  private columns: ColumnDef[] = [];
-  private rows: RowData[] = [];
+
+  private _columns: ColumnDef[] = [];
+  private _rows: RowData[] = [];
 
   static observedAttributes = ["columns", "rows"];
 
+  /* ================= ATTRIBUTES ================= */
+
+  attributeChangedCallback(name: string, _: string, value: string) {
+    if (!value) return;
+
+    if (name === "columns") {
+      this.columns = value;
+    }
+
+    if (name === "rows") {
+      this.rows = value;
+    }
+  }
+
+  /* ================= PROPERTIES ================= */
+
+  set columns(value: ColumnDef[] | string) {
+    this._columns =
+      typeof value === "string" ? JSON.parse(value) : value ?? [];
+    this.render();
+  }
+
+  get columns() {
+    return this._columns;
+  }
+
+  set rows(value: RowData[] | string) {
+    this._rows =
+      typeof value === "string" ? JSON.parse(value) : value ?? [];
+    this.render();
+  }
+
+  get rows() {
+    return this._rows;
+  }
+
+  /* ================= LIFECYCLE ================= */
+
   connectedCallback() {
-    if (this.shadowRoot) return; // 🔥 chống double mount (#299)
+    if (this.shadowRoot) return; // chống double mount (#299)
 
     const shadow = this.attachShadow({ mode: "open" });
 
@@ -27,57 +66,41 @@ export class ReactDataTableElement extends HTMLElement {
     this.render();
   }
 
-  attributeChangedCallback(name: string, _: string, value: string) {
-    if (!value) return;
-
-    try {
-      if (name === "columns") {
-        this.columns = JSON.parse(value);
-      }
-
-      if (name === "rows") {
-        this.rows = JSON.parse(value);
-      }
-
-      this.render();
-    } catch (e) {
-      console.error(`[react-data-table] Invalid JSON for ${name}`, e);
-    }
+  disconnectedCallback() {
+    this.root?.unmount();
+    this.root = null;
   }
+
+  /* ================= RENDER ================= */
 
   private render() {
     if (!this.root) return;
+    if (!Array.isArray(this._columns)) return;
 
     this.root.render(
       <DataTable
-        columns={this.columns}
-        rows={this.rows}
-        onEdit={(row) => {
+        columns={this._columns}
+        rows={this._rows}
+        onEdit={(row) =>
           this.dispatchEvent(
             new CustomEvent("row-edit", {
               detail: row,
               bubbles: true,
               composed: true,
             })
-          );
-        }}
-        onDelete={(row) => {
+          )
+        }
+        onDelete={(row) =>
           this.dispatchEvent(
             new CustomEvent("row-delete", {
               detail: row,
               bubbles: true,
               composed: true,
             })
-          );
-        }}
+          )
+        }
       />
     );
-  }
-
-  disconnectedCallback() {
-    // cleanup khi Jmix / Vaadin destroy view
-    this.root?.unmount();
-    this.root = null;
   }
 }
 

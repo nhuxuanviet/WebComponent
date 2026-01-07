@@ -1,11 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://company.com/schema/app-ui-components"
       title="msg://reactDataTableView.title">
-    <layout spacing="true">
-
-        <!-- Host element: HTML phải được ESCAPE -->
-        <html id="reactTableHost"
-              content="&lt;react-data-table style='display:block;width:100%;height:100%'&gt;&lt;/react-data-table&gt;"/>
-
+    <layout>
+        <app:reactDataTable id="table" width="100%" height="100%"/>
     </layout>
 </view>
