@@ -52,7 +52,7 @@ public class ReactDataTableView extends StandardView {
         table.addRowEditListener(e -> {
             try {
                 Map<String, Object> row =
-                        mapper.readValue(e.getRowJson(), Map.class);
+                        mapper.readValue(e.getDetailJson(), Map.class);
 
                 UUID userId = UUID.fromString(row.get("id").toString());
 
@@ -78,7 +78,7 @@ public class ReactDataTableView extends StandardView {
                                 .withHandler(ev -> {
                                     try {
                                         Map<String, Object> row =
-                                                mapper.readValue(e.getRowJson(), Map.class);
+                                                mapper.readValue(e.getDetailJson(), Map.class);
 
                                         UUID userId = UUID.fromString(row.get("id").toString());
 

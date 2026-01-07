@@ -3,11 +3,22 @@
 @reference "tailwindcss";
 
 /* =====================================================
+   HOST (Web Component)
+   ===================================================== */
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+}
+
+/* =====================================================
    ROOT (Shadow DOM entry)
    ===================================================== */
 .tw-root {
   width: 100%;
   height: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -19,7 +30,7 @@
   flex: 1;
   width: 100%;
   height: 100%;
-  min-width: 0;              /* ⚠️ cực kỳ quan trọng */
+  min-width: 0; /* ⚠️ cực kỳ quan trọng */
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -32,8 +43,7 @@
   flex: 1;
   width: 100%;
   min-width: 0;
-  overflow-y: auto;
-  overflow-x: auto;
+  overflow: auto; /* gọn hơn overflow-x/y */
   background: white;
 }
 
@@ -44,8 +54,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 14.5px;         /* 👈 TO HƠN, giống admin UI */
-  color: #1f2937;            /* gray-800 */
+  color: #1f2937; /* gray-800 */
 }
 
 /* =====================================================
@@ -56,12 +65,10 @@
   top: 0;
   z-index: 2;
 
-  background: #f8fafc;       /* slate-50 */
-  color: #374151;            /* gray-700 */
-
+  background: #f8fafc; /* slate-50 */
+  color: #374151; /* gray-700 */
   border-bottom: 1px solid #d1d5db; /* gray-300 */
 
-  padding: 16px 20px;        /* 👈 TO RÕ RỆT */
   text-align: center;
   font-weight: 600;
   white-space: nowrap;
@@ -72,11 +79,31 @@
    ===================================================== */
 .tw-td {
   border-bottom: 1px solid #e5e7eb; /* gray-200 */
-  padding: 16px 20px;        /* 👈 TO RÕ RỆT */
   text-align: center;
   vertical-align: middle;
   color: #1f2937;
   white-space: nowrap;
+}
+
+/* =====================================================
+   DENSITY (single source of truth for padding + font-size)
+   ===================================================== */
+.tw-density-compact .tw-th,
+.tw-density-compact .tw-td {
+  padding: 10px 12px;
+  font-size: 13.5px;
+}
+
+.tw-density-normal .tw-th,
+.tw-density-normal .tw-td {
+  padding: 16px 20px;
+  font-size: 14.5px;
+}
+
+.tw-density-comfortable .tw-th,
+.tw-density-comfortable .tw-td {
+  padding: 20px 24px;
+  font-size: 15px;
 }
 
 /* =====================================================
@@ -87,12 +114,12 @@
 }
 
 .tw-row-odd {
-  background: #f9fafb;       /* gray-50 */
+  background: #f9fafb; /* gray-50 */
 }
 
 .tw-row-even:hover,
 .tw-row-odd:hover {
-  background: #eef2ff;       /* indigo-50 */
+  background: #eef2ff; /* indigo-50 */
 }
 
 /* =====================================================
@@ -101,7 +128,7 @@
 .tw-empty {
   padding: 32px;
   text-align: center;
-  color: #6b7280;            /* gray-500 */
+  color: #6b7280; /* gray-500 */
   font-style: italic;
 }
 
@@ -132,10 +159,8 @@
   border-radius: 6px;
   cursor: pointer;
 
-  color: #64748b;            /* slate-500 */
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
+  color: #64748b; /* slate-500 */
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .tw-action:hover {
@@ -144,12 +169,12 @@
 
 /* Edit */
 .tw-action-edit:hover {
-  color: #2563eb;            /* blue-600 */
+  color: #2563eb; /* blue-600 */
 }
 
 /* Delete */
 .tw-action-delete:hover {
-  color: #dc2626;            /* red-600 */
+  color: #dc2626; /* red-600 */
 }
 
 /* =====================================================
@@ -184,6 +209,6 @@
 }
 
 .tw-page-info {
-  color: #4b5563;            /* gray-600 */
+  color: #4b5563; /* gray-600 */
   font-size: 14px;
 }

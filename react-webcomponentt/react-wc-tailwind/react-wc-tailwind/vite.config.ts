@@ -4,6 +4,8 @@ import { defineConfig } from "vite";
 export default defineConfig({
   build: {
     target: "es2017",
+    emptyOutDir: true,
+    minify: true,
     lib: {
       entry: "src/main.ts",
       formats: ["iife"],
@@ -11,13 +13,9 @@ export default defineConfig({
       fileName: () => "react-data-table.js",
     },
     rollupOptions: {
-      output: {
-        inlineDynamicImports: true,
-      },
+      output: { inlineDynamicImports: true },
     },
   },
-
-  // 🔥 BẮT BUỘC: chặn process
   define: {
     "process.env.NODE_ENV": '"production"',
   },
