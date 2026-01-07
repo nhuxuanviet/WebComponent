@@ -3,6 +3,6 @@
       title="msg://reactDataTableView.title">
     <layout>
         <app:reactDataTable id="table" width="90%" height="90%"
-                            editable="false" density="normal" deletable="false" pageSize="10"/>
+                            editable="false" density="normal" deletable="false" pageSize="3"/>
     </layout>
 </view>
